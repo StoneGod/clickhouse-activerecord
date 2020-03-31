@@ -17,6 +17,8 @@ module ActiveRecord
         def exec_query(sql, name = nil, binds = [], prepare: false)
           result = do_execute(sql, name)
           ActiveRecord::Result.new(result['meta'].map { |m| m['name'] }, result['data'])
+        rescue StandardError => _e
+          raise ActiveRecord::ActiveRecordError, "Response: #{result}"
         end
 
         def exec_update(_sql, _name = nil, _binds = [])
@@ -34,7 +36,7 @@ module ActiveRecord
         end
 
         def table_options(table)
-          sql = do_system_execute("SHOW CREATE TABLE #{table}")['data'].try(:first).try(:first)
+          sql = do_system_execute("SHOW CREATE TABLE `#{table}`")['data'].try(:first).try(:first)
           { options: sql.gsub(/^(?:.*?)ENGINE = (.*?)$/, '\\1') }
         end
 
@@ -79,6 +81,8 @@ module ActiveRecord
             raise ActiveRecord::ActiveRecordError,
               "Response code: #{res.code}:\n#{res.body}"
           end
+        rescue JSON::ParserError
+          res.body
         end
 
         def log_with_debug(sql, name = nil)
@@ -114,7 +118,7 @@ module ActiveRecord
         protected
 
         def table_structure(table_name)
-          result = do_system_execute("DESCRIBE TABLE #{table_name}", table_name)
+          result = do_system_execute("DESCRIBE TABLE `#{table_name}`", table_name)
           data = result['data']
 
           return data unless data.empty?

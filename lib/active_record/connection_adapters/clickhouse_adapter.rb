@@ -203,15 +203,32 @@ module ActiveRecord
       # Create a new ClickHouse database.
       def create_database(name)
         sql = "CREATE DATABASE #{quote_table_name(name)}"
+        cluster = pool.spec.config[:cluster]
+        sql += " ON CLUSTER #{cluster}" unless cluster.nil?
         log_with_debug(sql, adapter_name) do
-          res = @connection.post("/?#{@config.except(:database).to_param}", "CREATE DATABASE #{quote_table_name(name)}")
+          res = @connection.post("/?#{@config.except(:database).to_param}", sql)
           process_response(res)
+        end
+      end
+
+      def create_table(table_name, comment: nil, **options)
+        cluster = pool.spec.config[:cluster]
+        if cluster.nil?
+          super
+        else
+          super(
+            "#{table_name} ON CLUSTER #{cluster}",
+            comment: comment,
+            **options
+          )
         end
       end
 
       # Drops a ClickHouse database.
       def drop_database(name) #:nodoc:
         sql = "DROP DATABASE IF EXISTS #{quote_table_name(name)}"
+        cluster = pool.spec.config[:cluster]
+        sql += " ON CLUSTER #{cluster}" unless cluster.nil?
         log_with_debug(sql, adapter_name) do
           res = @connection.post("/?#{@config.except(:database).to_param}", sql)
           process_response(res)

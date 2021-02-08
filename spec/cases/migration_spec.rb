@@ -12,7 +12,7 @@ RSpec.describe 'Migration', :migrations do
       context 'plain' do
         it 'creates a table' do
           migrations_dir = File.join(FIXTURES_PATH, 'migrations', 'plain_table_creation')
-          quietly { ActiveRecord::MigrationContext.new(migrations_dir, model.connection.schema_migration).up }
+          ActiveRecord::MigrationContext.new(migrations_dir, model.connection.schema_migration).up
 
           current_schema = schema(model)
 

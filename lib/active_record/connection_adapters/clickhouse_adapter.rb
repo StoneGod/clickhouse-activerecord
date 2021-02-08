@@ -50,7 +50,7 @@ module ActiveRecord
   module TypeCaster
     class Map
       def is_view
-        types.is_view
+        @klass.is_view
       end
     end
   end
